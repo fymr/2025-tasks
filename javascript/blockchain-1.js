@@ -18,7 +18,7 @@ class Block {
   // crypto modülünü ve SHA256 kullanarak hash oluşturun.
   calculateHash() {
     return crypto.createHash("sha256")
-      .update(/* buraya blok verilerini string olarak ekle */)
+      .update(this.index+ this.timestamp+ JSON.stringify(this.data)+ JSON.stringify(this.previousHash)/* buraya blok verilerini string olarak ekle */)
       .digest("hex");
   }
 }
@@ -32,17 +32,25 @@ class Blockchain {
 
   // İlk blok (Genesis Block)
   createGenesisBlock() {
+    const genesisBlock= new Block(0,Date.now(),"Genesis Block","0");
     // Yeni bir Block nesnesi döndürün.
     // index: 0, data: "Genesis Block", previousHash: "0"
   }
 
   // Son bloğu döndür
   getLatestBlock() {
-    return /* zincirin son bloğunu döndür */
+    return this.chain[this.chain.length-1];/*zincirin son bloğunu döndür*/
   }
 
   // 3. Yeni blok ekleme fonksiyonu
   addBlock(newBlock) {
+    const newBlock= new Block();
+    newBlock.previousHash = this.getLatestBlock().hash;
+    newBlock.hash= newBlock.calculateHash();
+    this.chain.push(newBlock());
+    
+
+
     // newBlock.previousHash değerini güncelleyin (son bloğun hash’i)
     // newBlock.hash değerini yeniden hesaplayın
     // zincire ekleyin
@@ -51,6 +59,19 @@ class Blockchain {
 
   // Zinciri doğrulama fonksiyonu
   isChainValid() {
+    for(let i=1;i<this.chain.length;i++){
+      const blok1 =this.chain[i];
+      const blok2= this.chain[i-1];
+      
+      if(blok1.hash !== blok1.calculateHash()){
+        return false;
+
+      }
+      if(blok1.hash!== blok2.previousHash){
+        return false;
+      }
+      return true;
+    }
     // Tüm blokları kontrol edin:
     // Hash’ler doğru mu?
     // previousHash bir önceki bloğa eşit mi?
