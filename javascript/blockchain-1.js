@@ -1,4 +1,4 @@
-// Bu dosyada bir blockchain yapısı oluşturacağız.
+// Bu dosyada Proof of Work ile çalışan bir blockchain yapısı oluşturacağız.
 // Boşlukları doldurun ve kodu çalışır hale getirin
 
 const crypto = require("crypto");
@@ -11,15 +11,28 @@ class Block {
     this.timestamp = timestamp; // Blok oluşturulma zamanı
     this.data = data; // Blok verileri
     this.previousHash = previousHash; // Önceki bloğun hash'i
+    this.nonce = 0; // Madencilik için kullanılacak sayaç
     this.hash = this.calculateHash(); // Blok hash'i
   }
 
   // calculateHash() metodunu tamamlayın.
   // crypto modülünü ve SHA256 kullanarak hash oluşturun.
+  // index, timestamp, data, previousHash ve nonce değerlerini birleştirip hash oluşturun.
   calculateHash() {
-    return crypto.createHash("sha256")
-      .update(this.index+ this.timestamp+ JSON.stringify(this.data)+ JSON.stringify(this.previousHash)/* buraya blok verilerini string olarak ekle */)
-      .digest("hex");
+     return crypto.createHash("sha256")
+     .update(this.index +this.timestamp+ JSON.stringify(this.data)+this.previousHash+ this.nonce)/* buraya blok verilerini string olarak ekle */
+     .digest("hex");
+  }
+
+  // mineBlock() metodunu tamamlayın.
+  // Hash, difficulty kadar "0" ile başlayana kadar nonce değerini artırın.
+  mineBlock(difficulty) {
+    const target= Array(difficulty +1).join("0");
+     while (this.hash.substring(0, difficulty) !== target) {
+     this.nonce++;
+    this.hash = this.calculateHash();
+    }
+     console.log(`Blok ${this.index} kazildi: ${this.hash}`);
   }
 }
 
@@ -28,65 +41,57 @@ class Blockchain {
   constructor() {
     // Blok zincirini başlatırken ilk blok oluşturulur
     this.chain = [this.createGenesisBlock()];
+    this.difficulty = 3; // Hash'in başında olması gereken "0" sayısı
   }
 
   // İlk blok (Genesis Block)
   createGenesisBlock() {
-    const genesisBlock= new Block(0,Date.now(),"Genesis Block","0");
-    // Yeni bir Block nesnesi döndürün.
-    // index: 0, data: "Genesis Block", previousHash: "0"
+    return new Block(0, Date.now(), "Genesis Block", "0");
   }
 
   // Son bloğu döndür
   getLatestBlock() {
-    return this.chain[this.chain.length-1];/*zincirin son bloğunu döndür*/
+    return this.chain[this.chain.length - 1];
   }
 
   // 3. Yeni blok ekleme fonksiyonu
   addBlock(newBlock) {
-    const newBlock= new Block();
-    newBlock.previousHash = this.getLatestBlock().hash;
-    newBlock.hash= newBlock.calculateHash();
-    this.chain.push(newBlock());
     
-
-
-    // newBlock.previousHash değerini güncelleyin (son bloğun hash’i)
+    newBlock.previousHash = this.getLatestBlock().hash;
+    
+    newBlock.mineBlock();
+    this.chain.push(newBlock());
+    console.log('Blok ${newBlock.index} eklendi!');
+    // newBlock.previousHash değerini güncelleyin (son bloğun hash'i)
     // newBlock.hash değerini yeniden hesaplayın
+    // newBlock.mineBlock() metodunu çağırarak bloğu kazın
     // zincire ekleyin
-    console.log(`Blok ${newBlock.index} eklendi!`);
+    // console.log(`Blok ${newBlock.index} eklendi!`);
   }
 
   // Zinciri doğrulama fonksiyonu
   isChainValid() {
-    for(let i=1;i<this.chain.length;i++){
-      const blok1 =this.chain[i];
-      const blok2= this.chain[i-1];
-      
-      if(blok1.hash !== blok1.calculateHash()){
-        return false;
-
-      }
-      if(blok1.hash!== blok2.previousHash){
-        return false;
-      }
-      return true;
-    }
     // Tüm blokları kontrol edin:
-    // Hash’ler doğru mu?
+    // Hash'ler doğru mu?
     // previousHash bir önceki bloğa eşit mi?
     // Hatalı bir durum varsa false döndürün, aksi halde true.
+    for (let i = 1; i < this.chain.length; i++) {
+      const current = this.chain[i];
+      const previous = this.chain[i - 1];
+
+      if (current.hash !== current.calculateHash()) return false;
+      if (current.previousHash !== previous.hash) return false;
+    }
+    return true;
   }
 }
-
-
 
 // Blockchain'i test edelim
 let myChain = new Blockchain();
 
 // İki yeni blok ekleyin. Örn:
-myChain.addBlock(new Block(1, Date.now(), { amount: 10, from: "Ali", to: "Veli" }));
-myChain.addBlock(new Block(2, Date.now(), { amount: 20, from: "Ayşe", to: "Mehmet" }));
+myChain.addBlock(new Block(1, Date.now(), { from: "Ali", to: "Veli", amount: 10 }));
+myChain.addBlock(new Block(2, Date.now(), { from: "Ayşe", to: "Mehmet", amount: 20 }));
 
 // Zinciri ekrana yazdır
 console.log("\nBlockchain:", JSON.stringify(myChain, null, 2));
@@ -95,5 +100,5 @@ console.log("\nBlockchain:", JSON.stringify(myChain, null, 2));
 console.log("\nChain geçerli mi?", myChain.isChainValid());
 
 // Zinciri bozmayı deneyin (isteğe bağlı)
-// myChain.chain[1].data = { amount: 9999, from: "Hacker", to: "Kendisi" };
+// myChain.chain[1].data = { from: "Hacker", to: "Kendisi", amount: 9999 };
 // console.log("Chain geçerli mi?", myChain.isChainValid());

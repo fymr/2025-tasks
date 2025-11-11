@@ -19,19 +19,20 @@ class Block {
   // crypto modülünü ve SHA256 kullanarak hash oluşturun.
   // index, timestamp, data, previousHash ve nonce değerlerini birleştirip hash oluşturun.
   calculateHash() {
-    // return crypto.createHash("sha256")
-    //   .update(/* buraya blok verilerini string olarak ekle */)
-    //   .digest("hex");
+     return crypto.createHash("sha256")
+     .update(this.index +this.timestamp+ JSON.stringify(this.data)+this.previousHash+ this.nonce)/* buraya blok verilerini string olarak ekle */
+     .digest("hex");
   }
 
   // mineBlock() metodunu tamamlayın.
   // Hash, difficulty kadar "0" ile başlayana kadar nonce değerini artırın.
   mineBlock(difficulty) {
-    // while (this.hash.substring(0, difficulty) !== Array(difficulty + 1).join("0")) {
-    //   this.nonce++;
-    //   this.hash = this.calculateHash();
-    // }
-    // console.log(`Blok ${this.index} kazıldı: ${this.hash}`);
+    const target= Array(difficulty +1).join("0");
+     while (this.hash.substring(0, difficulty) !== target) {
+     this.nonce++;
+    this.hash = this.calculateHash();
+    }
+     console.log(`Blok ${this.index} kazildi: ${this.hash}`);
   }
 }
 
@@ -55,6 +56,12 @@ class Blockchain {
 
   // 3. Yeni blok ekleme fonksiyonu
   addBlock(newBlock) {
+    
+    newBlock.previousHash = this.getLatestBlock().hash;
+    
+    newBlock.mineBlock(this.difficulty);
+    this.chain.push(newBlock);
+    console.log('Blok ${newBlock.index} eklendi!');
     // newBlock.previousHash değerini güncelleyin (son bloğun hash'i)
     // newBlock.hash değerini yeniden hesaplayın
     // newBlock.mineBlock() metodunu çağırarak bloğu kazın
@@ -83,14 +90,14 @@ class Blockchain {
 let myChain = new Blockchain();
 
 // İki yeni blok ekleyin. Örn:
-// myChain.addBlock(new Block(1, Date.now(), { from: "Ali", to: "Veli", amount: 10 }));
-// myChain.addBlock(new Block(2, Date.now(), { from: "Ayşe", to: "Mehmet", amount: 20 }));
+myChain.addBlock(new Block(1, Date.now(), { from: "Ali", to: "Veli", amount: 10 }));
+myChain.addBlock(new Block(2, Date.now(), { from: "Ayşe", to: "Mehmet", amount: 20 }));
 
 // Zinciri ekrana yazdır
-// console.log("\nBlockchain:", JSON.stringify(myChain, null, 2));
+console.log("\nBlockchain:", JSON.stringify(myChain, null, 2));
 
 // Zinciri kontrol et
-// console.log("\nChain geçerli mi?", myChain.isChainValid());
+console.log("\nChain geçerli mi?", myChain.isChainValid());
 
 // Zinciri bozmayı deneyin (isteğe bağlı)
 // myChain.chain[1].data = { from: "Hacker", to: "Kendisi", amount: 9999 };
